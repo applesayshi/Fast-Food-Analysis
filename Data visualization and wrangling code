@@ -1,0 +1,51 @@
+fast_food_data <- read_csv("data/fast_food.csv")
+#fast_food_data
+
+total_amount_for_all <- fast_food_data |> 
+    group_by(name) |> 
+    summarize(count_of_restaurant_USA = n())
+#total_amount_for_all
+
+food_per_state <- fast_food_data |>
+    group_by(st,name) |>
+    summarize(count_of_res_in_state = n())
+#food_per_state 
+
+total_restaurant_per_state <- fast_food_data |>
+    group_by(st) |>
+    summarize(total_res_in_state = n())
+#total_restaurant_per_state
+
+total_food_USA <- sum(total_amount_for_all$count_of_restaurant_USA)
+#total_food_USA
+
+percent_restaurant_usa <- total_amount_for_all |> 
+    mutate(percent_usa = count_of_restaurant_USA/total_food_USA*100)
+#percent_restaurant_usa
+
+percent_of_res_per_state <- merge(food_per_state, total_restaurant_per_state, by = "st") |> 
+    mutate(percent = count_of_res_in_state/total_res_in_state *100)
+percent_of_res_per_state 
+
+minimum <- percent_of_res_per_state |>
+    group_by(name) |> 
+    filter(percent == min(percent)) 
+    
+percent_diff <- merge(minimum, percent_restaurant_usa, by = "name") |>
+    mutate(percent_diff = percent_usa - percent) |>
+    arrange(desc(percent_diff))
+percent_diff
+
+percent_diff <- percent_diff |> 
+    mutate(name_and_state = paste(name, st)) |>
+    arrange(desc(percent_diff)) |>
+    slice_head(n = 8)
+
+percent_diff
+
+
+percent_diff_plot <- percent_diff |> ggplot(aes(x = name_and_state, y = percent_diff)) + 
+    geom_point() + 
+    labs(x = "Name and the state", 
+         y = "Percent Difference between country and least represented state for restaraunt")
+percent_diff_plot
